@@ -13,6 +13,7 @@ It provides the following functions:
 import socket                   # Import socket module
 from collections import namedtuple
 import select
+import pickle
 
 s = socket.socket(socket.SOCK_DGRAM)             # Create a socket object
 host = socket.gethostname()     # Get local machine name
@@ -29,17 +30,18 @@ def select_name():
 
 def de_register(s,username, filename):
     t_pdu = PDU('T',{'peer_name':username,'file_name':filename})
-    b_t_pdu = pickle.dumps(t.pdu)
+    b_t_pdu = pickle.dumps(t_pdu)
     s.send(b_t_pdu)
     b_conf_pdu = s.recv
     conf_pdu = pickle.loads(b_conf_pdu)
-    return b_t_pdu
-
     if conf_pdu.data_type == 'A':
         print('successfully removed from the list')
 
     elif conf_pdu.data_type == 'E':
         print(conf_pdu.data)
+
+    # return conf_pdu
+
 
 def download_file(file_name, address, destination):
     ip = address[0]
@@ -53,12 +55,12 @@ def download_file(file_name, address, destination):
     ds.send(b_pdu)
     # send pdu to peer address (destination)
     r_b_pdu = ds.recv()
-    r_pdu = pickle.loads(r_b_type)
+    r_pdu = pickle.loads(r_b_pdu)
     data_type = r_pdu.data_type
     if data_type == 'E':
         print('File does not exist anymore')
-    elif data_type = 'C':
-        with open(destination+filename) as f:
+    elif data_type == 'C':
+        with open(destination+file_name) as f:
             f.write(r_pdu.data)
     # receive the data
     # it should be 'C' type
@@ -131,6 +133,9 @@ while True:
             # list local files
 
         if command == 'R':
+
+            filename = input('Please enter file name to be registered: ')
+
             # get the file name
             # create 'R' pdu using username, filename, IPaddress and portnumber
             # send 'R' pdu
@@ -144,9 +149,11 @@ while True:
                     # receive response
                     # extract data_type
 
-        if command == 'T':
-            # get the file name from user
-            de_register(username, filename)
+        if command == 'T': # De-register file from index server
+            # get the file name from user and de-register it from the index server
+            de_register(username, input('Please enter file name: '))
+
+
 
         if command == 'Q':
             # for all the registered files:
@@ -154,4 +161,3 @@ while True:
                 de_register(username, filename)
             # quit the program
             s.close()
-
